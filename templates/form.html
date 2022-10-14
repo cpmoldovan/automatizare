@@ -1,11 +1,19 @@
 <!DOCTYPE html>
 <html>
-
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automatizare</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+</head>
 <body>
+    <ul>  
+        <li><button class="button is-primary"><a class="is-italic is-size-4 " href="#">Acasa</a></button></li>   
+        <li><button class="button is-primary"><a class="is-italic is-size-4 " href="records.html" class="is-italic">Istoric</a></button></li> 
+    </ul> 
+    <h2 class="is-size-3 is-uppercase is-italic has-text-centered has-text-primary" >Automatizare draft-uri contract</h2>
 
-    <h2>Python HTTP Server Form</h2>
-
-    <form method="POST" , enctype="multipart/form-data" action='/success'>
+    <form method="POST" , enctype="multipart/form-data" action='/success' class="has-text-centered has-text-weight-bold">
         <label for="numar_iesire">Numar iesire:</label><br>
         <input type="text" name="numar_iesire" value="numar iesire"><br>
         <label for="data">Data:</label><br>
@@ -26,7 +34,6 @@
         <input type="text" name="plata_procent_ramas" value="lichidare"><br>
         <input type="submit" value="Genereaza document">
     </form>
-
 </body>
 
 </html>
