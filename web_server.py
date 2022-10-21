@@ -1,9 +1,13 @@
+from distutils import text_file
 import sys
 import cgi
 import time
 from docxtpl import DocxTemplate
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import os
+from io import StringIO
+import urllib
+import html
 
 HOST_NAME = "0.0.0.0"
 PORT = 8080
@@ -21,36 +25,65 @@ def read_html_template(path):
 
 class PythonServer(SimpleHTTPRequestHandler):
     """Python HTTP Server that handles GET and POST requests"""
-
+    paths = ["/documente_create"]
+    flag = 1
     def do_GET(self):
-        path = 'documente_create'
         if self.path == '/':
-            self.path = './templates/form.html'
+            self.path = './templates/index.html'
             file = read_html_template(self.path)
             self.send_response(200, "OK")
             self.end_headers()
             self.wfile.write(bytes(file, "utf-8"))
-        elif os.path.isdir(path):
+
+        if self.path == '/documente_create':
+            self.send_response(200, "OK")
+            self.end_headers()
+            self.list_directory('documente_create')
+
+    def list_directory(self, path):
+        if self.flag == 0:
             try:
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(str(os.listdir(path)).encode())
-            except Exception:
-                self.send_response(500)
-                self.end_headers()
-                self.wfile.write(b'error')
+                list = os.listdir(path.decode("utf8"))
+            except os.error:
+                self.send_error(404, "No permission to list directory")
+                return None
         else:
             try:
-                with open(path, 'rb') as f:
-                    data = f.read()
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(data)
-            # error handling skipped
-            except Exception:
-                self.send_response(500)
-                self.end_headers()
-                self.wfile.write(b'error')
+                list = self.paths
+            except os.error:
+                self.send_error(404, "No permission to list directory")
+                return None
+        list.sort(key=lambda a: a.lower())
+        f = StringIO()
+        displaypath = "Requested Files"
+        f.write('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">')
+        f.write("<html>\n<title>Directory listing for %s</title>\n" % displaypath)
+        f.write("<body>\n<h2>Directory listing for %s</h2>\n" % displaypath)
+        f.write("<hr>\n<ul>\n")
+        for dirname in list:
+            name = os.path.basename(dirname)
+            name = name.encode("utf8")
+            fullname = dirname.encode('utf8')
+            displayname = linkname = name
+            # Append / for directories or @ for symbolic links
+            if os.path.isdir(fullname):
+                displayname = name + "/"
+                linkname = name + "/"
+            if os.path.islink(fullname):
+                displayname = name + "@"
+                # Note: a link to a directory displays with @ and links with /
+            
+            f.write('<li><a href="%s">%s</a>\n'
+                    % (urllib.parse.quote(fullname), urllib.parse.quote(fullname)))
+        f.write("</ul>\n<hr>\n</body>\n</html>\n")
+        length = f.tell()
+        f.seek(0)
+        self.send_response(200)
+        encoding = "utf-8"
+        self.send_header("Content-type", "text/html; charset=%s" % encoding)
+        self.send_header("Content-Length", str(length))
+        self.end_headers()
+        return f
 
     def do_POST(self):
         if self.path == '/success':
